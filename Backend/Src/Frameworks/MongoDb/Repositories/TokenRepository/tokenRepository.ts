@@ -10,15 +10,7 @@ interface User {
 
 export default {
   
-  generateToken: async (userId: string, expires: any, type: any, secret = config.jwt.secret) => {
-    const payload = {
-      sub: userId,
-      iat: moment().unix(),
-      exp: expires.unix(),
-      type,
-    };
-    return jwt.sign(payload, secret);
-  },
+ 
 
 
    
@@ -28,12 +20,12 @@ export default {
     const refreshTokenExpires = moment().add(config.jwt.refreshExpirationDays, 'days');
 
     // Generate tokens using the generateToken function
-    const accessToken = await (this as any).generateToken(user.id, accessTokenExpires, tokenTypes.ACCESS);
-    const refreshToken = await (this as any).generateToken(user.id, refreshTokenExpires, tokenTypes.REFRESH);
+    const accessToken = await generateToken(user.id, accessTokenExpires, tokenTypes.ACCESS);
+    const refreshToken = await generateToken(user.id, refreshTokenExpires, tokenTypes.REFRESH);
 
     // Optionally save the refresh token
     if (shouldSaveToken) {
-      await (this as any).saveToken(refreshToken, user.id, refreshTokenExpires.toDate(), tokenTypes.REFRESH);
+      await saveToken(refreshToken, user.id, refreshTokenExpires.toDate(), tokenTypes.REFRESH);
     }
 
     // Return tokens with their expiration details
@@ -48,21 +40,36 @@ export default {
       },
     };
   },
-
   generateVerifyEmailToken : async (user:any)=>{
     const expires = moment().add(config.jwt.verifyEmailExpirationMinutes, 'minutes');
-    const verifyEmailToken = await  (this as any).generateToken(user.id, expires, tokenTypes.VERIFY_EMAIL);
-    await (this as any).saveToken(verifyEmailToken, user.id, expires, tokenTypes.VERIFY_EMAIL);
+    const verifyEmailToken = await  generateToken(user.id, expires, tokenTypes.VERIFY_EMAIL);
+    await saveToken(verifyEmailToken, user.id, expires, tokenTypes.VERIFY_EMAIL);
     return verifyEmailToken;
   },
 
-  saveToken: async (token, userId, expires, type, blacklisted = false) =>{
-    console.log(expires,"test expires");
-    
+
+ 
+
+
+};
+
+
+const  generateToken= async (userId: string, expires: any, type: any, secret = config.jwt.secret) => {
+    const payload = {
+      sub: userId,
+      iat: moment().unix(),
+      exp: expires.unix(),
+      type,
+    };
+    return jwt.sign(payload, secret);
+  }
+
+  const  saveToken= async (token, userId, expires, type, blacklisted = false) =>{
+    const expireDate=new Date(expires)
     const tokenDoc = await Token.create({
       token,
       user: userId,
-      expires: expires,
+      expires: expireDate,
       type,
       blacklisted,
     });
@@ -71,5 +78,3 @@ export default {
   }
 
 
-
-};

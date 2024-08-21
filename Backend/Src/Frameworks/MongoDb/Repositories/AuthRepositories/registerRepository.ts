@@ -28,7 +28,7 @@ export  default  {
       // Create and return the user
       return User.create(body);
  } catch (error) {
-    console.log(error,'ppppppppppppppppppp')
+  
  }
   } 
 };

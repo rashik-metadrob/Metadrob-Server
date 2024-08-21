@@ -3,14 +3,9 @@ import {
   RegisterInput,
 } from "../../../Entities/AuthEntities/registerEntity"; // Ensure correct path
 
-
-
-
 export const registerUseCase = (dependencies: any) => {
-
-
-  const{registerRepository,tokenRepository} = dependencies.repository
-  const { sendVerificationEmail} =dependencies.services
+  const { registerRepository, tokenRepository } = dependencies.repository;
+  const { sendVerificationEmail } = dependencies.services;
   const executeFunction = async (data: RegisterInput) => {
     try {
       // Validate the data (additional validation can be added as needed)
@@ -23,24 +18,30 @@ export const registerUseCase = (dependencies: any) => {
       ) {
         return { status: false, message: "Missing required fields." };
       }
-   
+
       const newUser = new Register(data);
       const user = await registerRepository.createUser(newUser);
-      console.log(user,'test user');
-      
+
       const tokens = await tokenRepository.generateAuthTokens(user);
-      console.log(tokens,'}}}}}}}')
-      const verifyEmailToken = await tokenRepository.generateVerifyEmailToken(user);
-      console.log(verifyEmailToken,"verified");
-      
-       const response:any = await sendVerificationEmail(user.email, verifyEmailToken);
-       console.log(response,"send");
-       
-       if(response){
-        console.log("come");
-        
-        return {status:true,message:"user register successfully"}
-       }
+
+      const verifyEmailToken = await tokenRepository.generateVerifyEmailToken(
+        user
+      );
+
+      const response: any = await sendVerificationEmail(
+        user.email,
+        verifyEmailToken
+      );
+      if (response) {
+        const data = {
+          user,
+          tokens,
+        };
+
+        return { status: true, data: data };
+      } else {
+        return { status: false, message: "user register failed" };
+      }
     } catch (error) {
       console.error("Error occurred during registration:", error);
       return {
